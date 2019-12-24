@@ -25,17 +25,40 @@
 
   var Flake, Snowfall;
 
-  Snowfall = function (max) {
-    if (typeof max === "undefined") {
-      max = 300;
-    }
-
+  Snowfall = function (options) {
     if (!window.HTMLCanvasElement) {
       console.warn('Snowfall.js is aborting due to the browser not supporting <canvas>');
       return;
     }
 
-    this.max    = max;
+    this.max_flakes  = 300;
+    this.color       = '#aaa';
+    this.position    = 'fixed';
+    this.max_speed   = 0.5;
+    this.max_size    = 4;
+
+    if (typeof options !== "undefined") {
+      if (typeof options.max_flakes !== "undefined") {
+        this.max_flakes = options.max_flakes;
+      }
+      if (typeof options.color !== "undefined") {
+        this.color = options.color;
+      }
+      if (typeof options.position !== "undefined") {
+        this.position = options.position;
+      }
+      if (typeof options.max_speed !== "undefined") {
+        this.max_speed = options.max_speed;
+      }
+      if (typeof options.max_size !== "undefined") {
+        this.max_size = options.max_size;
+      }
+      // for backwards-compatibility
+      if (typeof options === "number"){
+        this.max_flakes = options;
+      }
+    }
+
     this.flakes = [];
 
     this.createCanvas();
@@ -50,7 +73,7 @@
     this.canvas.height = window.innerHeight;
     this.context = this.canvas.getContext('2d');
 
-    this.canvas.setAttribute('style', 'position: absolute; top: 0; left: 0; z-index: 99999; pointer-events: none');
+    this.canvas.setAttribute('style', 'position: ' + this.position + '; top: 0; left: 0; z-index: 99999; pointer-events: none');
     document.body.appendChild(this.canvas);
   };
 
@@ -73,8 +96,17 @@
   Snowfall.prototype.generateFlakes = function () {
     var i;
 
-    for (i = 0; i < this.max; i += 1) {
-      this.flakes.push(new Flake(Math.floor(Math.random() * this.canvas.width), Math.floor(Math.random() * this.canvas.height)));
+    for (i = 0; i < this.max_flakes; i += 1) {
+      this.flakes.push(
+        new Flake(
+          Math.floor(Math.random() * this.canvas.width),
+          Math.floor(Math.random() * this.canvas.height),
+          {
+              max_speed: this.max_speed,
+              max_size: this.max_size
+          }
+        )
+      );
     }
   };
 
@@ -94,7 +126,7 @@
     var i, len, flake;
 
     this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.context.fillStyle = '#fff';
+    this.context.fillStyle = this.color;
 
     for (i = 0, len = this.flakes.length; i < len; i += 1) {
       flake = this.flakes[i];
@@ -145,16 +177,18 @@
     window.cancelAnimationFrame(this.animation);
   };
 
-  Flake = function (x, y) {
+  Flake = function (x, y, options) {
+    this.max_speed = options.max_speed;
+    this.max_size = options.max_size;
     this.reset(x, y);
   };
 
   Flake.prototype.setSpeed = function () {
-    this.speed = Math.max(0.1, Math.random() * 0.5);
+    this.speed = Math.max(0.1, Math.random() * this.max_speed);
   };
 
   Flake.prototype.setSize = function () {
-    this.size = Math.max(1, Math.floor(Math.random() * 4));
+    this.size = Math.max(1, Math.floor(Math.random() * this.max_size));
   };
 
   Flake.prototype.move = function (delta) {
@@ -172,5 +206,9 @@
     this.setSize();
   };
 
-  window.Snowfall = new Snowfall(300);
+  window.Snowfall = new Snowfall({
+    max_flakes: 350,
+    max_size: 5,
+    max_speed: 0.6,
+  });
 } (window));
